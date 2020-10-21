@@ -1,3 +1,7 @@
+import json
+from undefined_func import get_of_songs
+
+
 START_DISCO = {
     "type": "section",
     "text": {
@@ -6,7 +10,7 @@ START_DISCO = {
     },
     "accessory": {
         "type": "checkboxes",
-        "action_id": "this_is_an_action_id",
+        "action_id": "select_song_1",
         "options": [
             {
                 "value": "1",
@@ -26,5 +30,29 @@ START_DISCO = {
     }
 }
 
-def create_block_of_songs(request):
-    START_DISCO['accessory']
+def create_block_of_songs(request, limit):
+    """
+    Main function that creates blocks with songs to choose.
+    This block needs to be connected to messages sent by bot.
+    """
+    get_of_songs(limit)
+
+    checkbox_options = []
+
+    # Get temp song data
+    with open('songs.json') as f:
+        songs = json.load(f)
+
+    for index, song in enumerate(songs):
+        song_option = {
+            'value': str(index + 1),
+            'text': {
+                'type': 'plain_text',
+                'text': '{} --- {} votes'.format(song['title'], song['votes'])
+            }
+        }
+        checkbox_options.append(song_option)
+    
+    START_DISCO['accessory']['options'] = checkbox_options
+
+    return [START_DISCO]

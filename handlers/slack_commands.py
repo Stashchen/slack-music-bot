@@ -1,8 +1,9 @@
 from slack import WebClient
 import msg_blocks
 
-from handlers.common_functions import is_admin
+from handlers.common_functions import is_admin, upload_file
 from handlers.msg_functions import send_msg_to_user, send_msg_to_chat
+from undefined_func import choose_the_winner_song, download_song, delete_songs_json
 
 
 def limit_disco_songs(limit: int, command_arguments: str) -> int:
@@ -29,9 +30,34 @@ def start_disco(client: WebClient, request_form: dict, limit: int) -> None:
     /disco is valid only for channel admin.
     """
     if is_admin(client, request_form):
-        send_msg_to_chat(client, request_form, 'GOOD')
+
+        # Realization of only one poll, based on a song.json file.
+        # Needs to be rebuild for db.
+        try:
+            f = open('songs.json')
+            send_msg_to_user(client, request_form, 'Previous poll is not finished. Type /lightsoff to finish it.')
+        except FileNotFoundError:
+            blocks = msg_blocks.create_block_of_songs(request_form, limit)
+            send_msg_to_chat(client, request_form, 'MUSIC POLL🎶', blocks=blocks)
+        
     else:
         send_msg_to_user(client, request_form, 'You have no permission.')
+
+def start_lightsoff(client: WebClient, request_form: dict):
+    """
+    Function that is invoked when we run /lightsoff command.
+    Finish the last poll and give the song.
+    """
+    try:
+        f = open('songs.json')
+        send_msg_to_chat(client, request_form, 'The poll is finished. The winner is ...')
+        winner = choose_the_winner_song()
+        download_song(winner['title'], winner['link'], './songs')
+        upload_file(client, request_form, './songs/{}.mp3'.format(winner['title']))
+        delete_songs_json()
+    except FileNotFoundError:
+        send_msg_to_user(client, request_form, 'No polls started yet. Use /disco command to run poll.')
+
 
 def handle_command(client: WebClient, request_form: dict) -> None:
     """
@@ -46,4 +72,6 @@ def handle_command(client: WebClient, request_form: dict) -> None:
             start_disco(client, request_form, limit_of_songs)
         else:
             start_disco(client, request_form, 10)
+    elif command == '/lightsoff':
+        start_lightsoff(client, request_form)
         
