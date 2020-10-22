@@ -3,7 +3,7 @@ import msg_blocks
 
 from handlers.common_functions import is_admin, upload_file
 from handlers.msg_functions import send_msg_to_user, send_msg_to_chat
-from undefined_func import choose_the_winner_song, download_song, delete_songs_json
+from undefined_func import choose_the_winner_song, download_song, delete_songs_json, make_valid_song_name
 
 
 def limit_disco_songs(limit: int, command_arguments: str) -> int:
@@ -52,8 +52,9 @@ def start_lightsoff(client: WebClient, request_form: dict):
         f = open('songs.json')
         send_msg_to_chat(client, request_form, 'The poll is finished. The winner is ...')
         winner = choose_the_winner_song()
-        download_song(winner['title'], winner['link'], './songs')
-        upload_file(client, request_form, './songs/{}.mp3'.format(winner['title']))
+        song_title = make_valid_song_name(winner)
+        download_song(song_title, winner['link'], './songs')
+        upload_file(client, request_form, './songs/{}.mp3'.format(song_title))
         delete_songs_json()
     except FileNotFoundError:
         send_msg_to_user(client, request_form, 'No polls started yet. Use /disco command to run poll.')

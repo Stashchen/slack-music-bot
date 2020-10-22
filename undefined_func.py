@@ -43,7 +43,7 @@ def choose_the_winner_song() -> dict:
     """
     with open('songs.json') as f:
         songs = json.load(f) 
-    
+
     winner = songs[0]
     for song in songs[1:]:
         if song['votes'] > winner['votes']:
@@ -53,3 +53,10 @@ def choose_the_winner_song() -> dict:
 
 def delete_songs_json() -> None:
     system('rm songs.json')
+
+def make_valid_song_name(song):
+    song_title = ''
+    for symbol in song['title']:
+        if symbol not in (' ', '(', ')', '.'):
+            song_title += symbol
+    return song_title
