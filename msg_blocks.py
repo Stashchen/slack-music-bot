@@ -10,7 +10,7 @@ START_DISCO = {
     },
     "accessory": {
         "type": "checkboxes",
-        "action_id": "select_song_1",
+        "action_id": "music_poll",
         "options": [
             {
                 "value": "1",
@@ -48,7 +48,7 @@ def create_block_of_songs(request, limit):
             'value': str(index + 1),
             'text': {
                 'type': 'plain_text',
-                'text': '{} --- {} votes'.format(song['title'], song['votes'])
+                'text': '{} --- {} votes'.format(song['title'], len(song['voted_users']))
             }
         }
         checkbox_options.append(song_option)

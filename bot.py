@@ -1,4 +1,7 @@
 from handlers.slack_commands import handle_command
+from request_parse_functions import get_selected_songs_list, get_user_id
+from handlers.slack_interactivity import update_poll_with_user_votes
+
 
 from flask import Flask, Response, request
 import json
@@ -46,9 +49,19 @@ def command_hook():
 @app.route('/slack/interactivity', methods=['POST'])
 def interactivity_hook():
     """
-    Function, that handles all the interactivity (buttons, checkboxes, slack shortcuts, etc.)
+    Function, that handles all the interactivity (buttons, checkboxes, slack shortcuts, etc.).
+    But in that bot, it will handle only poll selection interactivity.
     """
-    print(request.values)
+
+    # If there are going to be any other interactivity,
+    # interactivity type check will needs to be added.
+    user_id = get_user_id(request)
+    selected_songs = get_selected_songs_list(request)
+
+    update_poll_with_user_votes(user_id, selected_songs)
+
+
+
     return Response(status=200)
 
 # Get adabter to process slack events

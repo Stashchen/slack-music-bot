@@ -23,17 +23,17 @@ def get_of_songs(limit: int) -> None:
 
     for index, song_a in enumerate(random.sample(all_top_songs, limit)):        
         song = {}
-        song['index'] = index + 1
+        song['value'] = index + 1
         song['title'] = song_a.get('title').split(' ', 2)[-1]
         song['link'] = 'https://zaycev.net' + song_a.get('href')
-        song['votes'] = 0
+        song['voted_users'] = []
 
         songs.append(song)
 
     with open('songs.json', 'w') as f:
         f.write(json.dumps(songs))
 
-def download_song(title, link, path):
+def download_song(title: str, link: str, path: str) -> None:
     system(f'wget -O {path}/{title}.mp3 "{link}"')
 
 def choose_the_winner_song() -> dict:
@@ -54,7 +54,10 @@ def choose_the_winner_song() -> dict:
 def delete_songs_json() -> None:
     system('rm songs.json')
 
-def make_valid_song_name(song):
+def delete_songs_mp3(path: str) -> None:
+    system(f'rm {path}/*.mp3')
+
+def make_valid_song_name(song: str) -> str:
     song_title = ''
     for symbol in song['title']:
         if symbol not in (' ', '(', ')', '.'):
