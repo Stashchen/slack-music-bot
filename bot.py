@@ -1,26 +1,25 @@
-from handlers.slack_commands import handle_command
-from request_parse_functions import get_selected_songs_list, get_user_id
-from handlers.slack_interactivity import update_poll_with_user_votes
-
-
 from flask import Flask, Response, request
 import json
 import os
 from threading import Thread
+from poll import Poll
 from slack import WebClient
 from slackeventsapi import SlackEventAdapter
+
+from handlers.handlers import handle_commands, handle_interactivity
 
 
 # Start Flask app that will be produce all the requests
 app = Flask(__name__)
 
 # Get venv variables
-SLACK_BOT_SIGNIN_TOKEN = os.environ['SLACK_BOT_SIGNIN_TOKEN']
-SLACK_BOT_ACCESS_TOKEN = os.environ['SLACK_BOT_ACCESS_TOKEN']
-SLACK_BOT_VERIFICATION_TOKEN = os.environ['SLACK_BOT_VERIFICATION_TOKEN']
+SLACK_BOT_SIGNIN_TOKEN = os.environ.get('SLACK_BOT_SIGNIN_TOKEN')
+SLACK_BOT_ACCESS_TOKEN = os.environ.get('SLACK_BOT_ACCESS_TOKEN')
+SLACK_BOT_VERIFICATION_TOKEN = os.environ.get('SLACK_BOT_VERIFICATION_TOKEN')
 
-# Get slack api client
+# Get slack api client and poll object
 slack_client = WebClient(SLACK_BOT_ACCESS_TOKEN)
+music_poll = Poll(10)
 
 # Enable several routes to the server
 @app.route("/")
@@ -43,7 +42,7 @@ def command_hook():
     """
     Function to handle all the bots commands.
     """
-    handle_command(slack_client, request.form)
+    handle_commands(client=slack_client, poll=music_poll, request_form=request.form)
     return Response(status=200)
 
 @app.route('/slack/interactivity', methods=['POST'])
@@ -52,35 +51,12 @@ def interactivity_hook():
     Function, that handles all the interactivity (buttons, checkboxes, slack shortcuts, etc.).
     But in that bot, it will handle only poll selection interactivity.
     """
-
-    # If there are going to be any other interactivity,
-    # interactivity type check will needs to be added.
-    user_id = get_user_id(request)
-    selected_songs = get_selected_songs_list(request)
-
-    update_poll_with_user_votes(user_id, selected_songs)
-
-
-
+    handle_interactivity(client=slack_client, request=request, poll=music_poll)
     return Response(status=200)
 
-# Get adabter to process slack events
 slack_events_adapter = SlackEventAdapter(
     SLACK_BOT_SIGNIN_TOKEN, "/slack/events", app
-)  
-
-# If bot is mentioned event
-@slack_events_adapter.on("app_mention")
-def handle_message(event_data):
-    def send_reply(value):
-        event_data = value
-        message = event_data["event"]
-
-        if message.get("subtype") is None: # subtype is for bots.
-            pass
-    thread = Thread(target=send_reply, kwargs={"value": event_data})
-    thread.start()
-    return Response(status=200)
+) 
 
 
 if __name__ == "__main__":
